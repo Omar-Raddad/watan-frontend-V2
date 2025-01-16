@@ -1,3 +1,4 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
@@ -51,9 +52,15 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
+      // Retrieve FCM token
+      final fcmToken = await FirebaseMessaging.instance.getToken();
+      print('FCM Token: $fcmToken');
+
+      // Call the API to log in with FCM token
       final result = await apiService.login(
         emailController.text.trim(),
         passwordController.text.trim(),
+        fcmToken,
       );
 
       // Check for valid token
@@ -61,10 +68,17 @@ class _LoginScreenState extends State<LoginScreen> {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('authToken', result['token']);
         await prefs.setBool('isLoggedIn', true);
-
-        // Store user id if available
-        if (result['user'] != null && result['user']['id'] != null) {
-          await prefs.setString('userId', result['user']['id']);
+        print('user ${result['user']}');
+        // Store user id and username if available
+        if (result['user'] != null) {
+          final user = result['user'];
+          if (user['id'] != null) {
+            await prefs.setString('userId', user['id']);
+          }
+          if (user['username'] != null) {
+            print("${user['username']}");
+            await prefs.setString('username', user['username']);
+          }
         }
 
         // Show success message

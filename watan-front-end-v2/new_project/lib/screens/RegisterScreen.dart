@@ -1,3 +1,4 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
@@ -19,7 +20,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController cityController = TextEditingController();
   final TextEditingController locationController = TextEditingController();
   String gender = 'Male'; // Default gender selection
-
   void _register() async {
     if (passwordController.text != confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -30,21 +30,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     try {
+      // Retrieve FCM token
+      final fcmToken = await FirebaseMessaging.instance.getToken();
+      print('FCM Token: $fcmToken');
+
+      // Call the API to register with the FCM token
       final result = await apiService.register(
-        nameController.text,
-        emailController.text,
-        passwordController.text,
-        cityController.text,
-        locationController.text,
+        nameController.text.trim(),
+        emailController.text.trim(),
+        passwordController.text.trim(),
+        cityController.text.trim(),
+        locationController.text.trim(),
         gender,
+        fcmToken,
       );
 
+      // Show success message
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('Registration successful: ${result['message']}'),
         backgroundColor: Colors.green,
       ));
 
-      Navigator.pop(context); // Navigate back to LoginScreen
+      // Navigate back to LoginScreen
+      Navigator.pop(context);
     } catch (error) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('Registration failed: $error'),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:new_project/screens/NotificationsScreen.dart';
 import 'package:new_project/screens/post_details_screen.dart';
 import 'package:new_project/services/post_service.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -7,6 +8,7 @@ import 'package:timeago/timeago.dart' as timeago;
 import '../models/post_model.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import '../services/notification_service.dart'; // Import the notification service
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -18,16 +20,66 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final PostService postService = PostService();
   final TextEditingController _postController = TextEditingController();
+  final NotificationService notificationService =
+      NotificationService(); // Notification service instance
+
   List<File> _selectedImage = [];
 
   List<Post> posts = [];
   bool isLoading = true;
   bool isAddingPost = false;
+  int notificationCount = 0; // Initially 0, update this dynamically later
 
   @override
   void initState() {
     super.initState();
     _loadPosts();
+    _loadNotifications(); // Load notifications on initialization
+  }
+
+  Future<void> _loadNotifications() async {
+    try {
+      // Replace 'USER_ID' with the actual user ID
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('userId');
+      final notifications =
+          await notificationService.fetchNotifications(userId!);
+
+      // Count unread notifications
+      final unreadCount =
+          notifications.where((notification) => !notification['isRead']).length;
+
+      setState(() {
+        notificationCount = unreadCount; // Update badge count
+      });
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load notifications: $error')),
+      );
+    }
+  }
+
+  Future<void> _clearNotifications() async {
+    try {
+      // Replace 'USER_ID' w
+      //ith the actual user ID
+      final prefs = await SharedPreferences.getInstance();
+
+      final userId = prefs.getString('userId');
+      await notificationService.clearNotifications(userId!);
+
+      setState(() {
+        notificationCount = 0; // Clear the badge
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Notifications cleared')),
+      );
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error clearing notifications: $error')),
+      );
+    }
   }
 
   Future<void> _loadPosts() async {
@@ -170,11 +222,26 @@ class _HomeScreenState extends State<HomeScreen> {
   void _reactToPost(String postId, String reactionType) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken');
-    if (token == null) return;
+    final userId = prefs.getString('userId'); // Assuming you have the user's ID
+    final username = prefs.getString('username'); // Assuming username is stored
+    if (token == null || userId == null || username == null) return;
 
     try {
+      // React to the post
       await postService.reactToPost(postId, token, reactionType);
-      await _loadPosts(); // Refresh posts after reaction
+
+      // Notify the post owner
+      final post = posts.firstWhere((post) => post.id == postId);
+      if (post.userId != userId) {
+        await notificationService.sendPostInteractionNotification(
+          post.userId, // Receiver (Post owner)
+          username, // Sender username
+          reactionType, // Reaction type
+        );
+      }
+
+      // Reload posts to reflect the updated reactions
+      await _loadPosts();
     } catch (error) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to react to post: $error')),
@@ -235,7 +302,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _getImageUrl(String imagePath) {
-    const String baseUrl = "http://172.16.0.107:5000"; // Your backend URL
+    const String baseUrl = "http://172.16.0.68:5000"; // Your backend URL
     return "$baseUrl$imagePath";
   }
 
@@ -245,6 +312,53 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('Home Feed'),
         backgroundColor: Colors.green,
+        actions: [
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications),
+                onPressed: () {
+                  // Navigate to Notifications Page
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const NotificationsScreen(),
+                    ),
+                  ).then((_) {
+                    // Refresh notifications after returning from the Notifications screen
+                    _loadNotifications();
+                  });
+                },
+              ),
+              if (notificationCount >
+                  0) // Show badge only if there are notifications
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    child: Text(
+                      '$notificationCount', // Dynamic notification count
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
       ),
       body: Container(
         decoration: const BoxDecoration(

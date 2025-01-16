@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/conversation_model.dart';
 import '../services/message_service.dart';
 import 'chat_screen.dart';
@@ -12,19 +13,35 @@ class ConversationsScreen extends StatefulWidget {
 
 class _ConversationsScreenState extends State<ConversationsScreen> {
   final MessageService messageService =
-      MessageService(baseUrl: 'http://172.16.0.107:5000');
+      MessageService(baseUrl: 'http://172.16.0.68:5000');
   List<Conversation> conversations = [];
   bool isLoading = true;
+  String? currentUserId;
 
   @override
   void initState() {
     super.initState();
+    _initializeUserIdAndFetchConversations();
+  }
+
+  Future<void> _initializeUserIdAndFetchConversations() async {
+    final prefs = await SharedPreferences.getInstance();
+    currentUserId = prefs.getString('userId');
+
+    if (currentUserId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to get current user ID')),
+      );
+      return;
+    }
+
     _fetchConversations();
   }
 
   Future<void> _fetchConversations() async {
     try {
       final fetchedConversations = await messageService.fetchConversations();
+
       setState(() {
         conversations = fetchedConversations;
         isLoading = false;
@@ -63,9 +80,16 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                   itemCount: conversations.length,
                   itemBuilder: (context, index) {
                     final conversation = conversations[index];
+
+                    // Safely identify the other participant
                     final otherParticipant =
                         conversation.participants.firstWhere(
-                      (participant) => participant.id != 'CURRENT_USER_ID',
+                      (participant) => participant.id != currentUserId,
+                      orElse: () => Participant(
+                        id: '',
+                        username: 'Unknown User',
+                        avatarUrl: null,
+                      ),
                     );
 
                     // Wrap each ListTile in a Container with decoration for a “card-like” effect
@@ -75,7 +99,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color.fromARGB(255, 206, 216, 207)
+                        color: const Color.fromARGB(255, 112, 45, 43)
                             .withOpacity(0.75),
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
@@ -96,7 +120,8 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                               ? NetworkImage(otherParticipant.avatarUrl!)
                               : const AssetImage('assets/user.png')
                                   as ImageProvider,
-                          backgroundColor: Colors.grey,
+                          backgroundColor:
+                              const Color.fromARGB(255, 126, 70, 70),
                           radius: 24,
                         ),
                         title: Text(

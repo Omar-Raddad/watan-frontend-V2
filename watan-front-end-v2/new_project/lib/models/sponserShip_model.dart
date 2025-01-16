@@ -61,8 +61,7 @@ class _SponsorshipModalState extends State<SponsorshipModal> {
     setState(() => isLoading = true);
 
     try {
-      final productService =
-          ProductService(baseUrl: 'http://172.16.0.107:5000');
+      final productService = ProductService(baseUrl: 'http://172.16.0.68:5000');
       await productService.addSponsorship(
         productId: widget.productId,
         amountPaid: amountPaid,

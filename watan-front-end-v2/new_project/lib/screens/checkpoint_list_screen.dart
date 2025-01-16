@@ -11,7 +11,7 @@ class CheckpointsListPage extends StatefulWidget {
 
 class _CheckpointsListPageState extends State<CheckpointsListPage> {
   final CheckpointService checkpointService =
-      CheckpointService(baseUrl: 'http://172.16.0.107:5000');
+      CheckpointService(baseUrl: 'http://172.16.0.68:5000');
   List<dynamic> _checkpoints = [];
   bool _isLoading = true;
 

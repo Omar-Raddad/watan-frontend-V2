@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "517725674118",
+    "project_id": "watan-e914f",
+    "storage_bucket": "watan-e914f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:517725674118:android:8bc78881e72b949eedcf07",
+        "android_client_info": {
+          "package_name": "com.example.new_project"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1GFQ-l3Plbh2Z6H93PV__YJ6-X9TKAKs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

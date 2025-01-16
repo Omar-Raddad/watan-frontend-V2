@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import '../models/post_model.dart';
 
 class PostService {
-  final String baseUrl = "http://172.16.0.107:5000";
+  final String baseUrl = "http://172.16.0.68:5000";
   Future<void> createPost(
       String content, List<File> images, String token) async {
     final request =

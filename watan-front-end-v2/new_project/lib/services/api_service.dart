@@ -4,14 +4,18 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  final String baseUrl = "http://172.16.0.107:5000";
+  final String baseUrl = "http://172.16.0.68:5000";
 
-  Future<dynamic> login(String email, String password) async {
+  Future<dynamic> login(String email, String password, String? fcmToken) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/api/auth/login'),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"email": email, "password": password}),
+        body: jsonEncode({
+          "email": email,
+          "password": password,
+          "fcmToken": fcmToken, // Include FCM token in the request
+        }),
       );
 
       if (response.statusCode == 200) {
@@ -25,7 +29,7 @@ class ApiService {
   }
 
   Future<dynamic> register(String username, String email, String password,
-      String city, String location, String gender) async {
+      String city, String location, String gender, String? fcmToken) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/api/auth/register'),
@@ -37,6 +41,7 @@ class ApiService {
           "city": city,
           "location": location,
           "gender": gender,
+          "fcmToken": fcmToken, // Include FCM token in the request
         }),
       );
 

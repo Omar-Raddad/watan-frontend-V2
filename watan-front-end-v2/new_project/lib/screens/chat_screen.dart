@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:new_project/services/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/message_service.dart';
 import '../models/message_model.dart';
@@ -14,7 +15,7 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final MessageService messageService =
-      MessageService(baseUrl: 'http://172.16.0.107:5000');
+      MessageService(baseUrl: 'http://172.16.0.68:5000');
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
@@ -60,9 +61,45 @@ class _ChatScreenState extends State<ChatScreen> {
     if (content.isEmpty) return;
 
     try {
+      // Get user details from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final currentUserName =
+          prefs.getString('username'); // Fetch current username
+      final currentUserId = prefs.getString('userId'); // Fetch current user ID
+
+      if (currentUserName == null || currentUserId == null) {
+        throw Exception("User is not logged in.");
+      }
+
+      // Send message via the message service
       await messageService.sendMessage(widget.conversationId, content);
+
+      // Send a notification to the recipient
+      final recipientId = messages.isNotEmpty
+          ? messages.first.senderId == currentUserId
+              ? messages.first.senderId
+              : messages.first.senderId
+          : null;
+      print('notifaction ${recipientId}');
+      if (recipientId != null) {
+        final notificationService = NotificationService();
+        await notificationService.sendMessageNotification(
+          recipientId,
+          currentUserName,
+          content,
+        );
+      }
+
+      // Clear the input field and refresh messages
       _messageController.clear();
       await _fetchMessages();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Message sent successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to send message: $e')),
@@ -174,8 +211,9 @@ class _ChatScreenState extends State<ChatScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
       decoration: BoxDecoration(
-        color: Colors.grey[100]?.withOpacity(0.9),
-        border: Border(top: BorderSide(color: Colors.grey.shade300)),
+        color: const Color.fromARGB(255, 124, 60, 60)?.withOpacity(0.9),
+        border: Border(
+            top: BorderSide(color: const Color.fromARGB(255, 160, 105, 105))),
       ),
       child: Row(
         children: [
@@ -185,7 +223,7 @@ class _ChatScreenState extends State<ChatScreen> {
               decoration: InputDecoration(
                 hintText: 'Type your message...',
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: const Color.fromARGB(255, 22, 22, 22),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(20),
                   borderSide: BorderSide.none,

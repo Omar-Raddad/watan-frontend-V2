@@ -14,7 +14,7 @@ class CheckpointDetailsPage extends StatefulWidget {
 
 class _CheckpointDetailsPageState extends State<CheckpointDetailsPage> {
   final CheckpointService checkpointService =
-      CheckpointService(baseUrl: 'http://172.16.0.107:5000');
+      CheckpointService(baseUrl: 'http://172.16.0.68:5000');
   Map<String, dynamic>? _checkpointDetails;
   bool _isLoading = true;
   final TextEditingController _reviewController = TextEditingController();

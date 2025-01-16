@@ -13,7 +13,7 @@ class AddProductScreen extends StatefulWidget {
 
 class _AddProductScreenState extends State<AddProductScreen> {
   final ProductService _productService =
-      ProductService(baseUrl: 'http://172.16.0.107:5000');
+      ProductService(baseUrl: 'http://172.16.0.68:5000');
 
   final _formKey = GlobalKey<FormState>();
 

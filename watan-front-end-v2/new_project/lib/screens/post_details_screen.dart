@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:new_project/services/notification_service.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:new_project/services/post_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,9 +19,10 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
   final Map<String, TextEditingController> _replyControllers = {};
   bool isAddingComment = false;
   String? activeReplyCommentId; // Tracks which comment is being replied to
+  final NotificationService _notificationService = NotificationService();
 
   String _getImageUrl(String imagePath) {
-    const String baseUrl = "http://172.16.0.107:5000"; // Your backend URL
+    const String baseUrl = "http://172.16.0.68:5000"; // Your backend URL
     return "$baseUrl$imagePath";
   }
 
@@ -41,7 +43,17 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
       final token = prefs.getString('authToken');
       if (token == null) return;
 
+      // Add comment to the post
       await PostService().addComment(widget.post.id, commentText, token);
+      final username =
+          prefs.getString('username'); // Assuming username is stored
+
+      // Notify the post owner
+      await _notificationService.sendPostInteractionNotification(
+        widget.post.userId, // Post owner's ID
+        username!, // Post owner's username
+        "comment", // Interaction type
+      );
 
       // Fetch updated post
       final updatedPost =
@@ -64,6 +76,9 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
   }
 
   void _addReply(String commentId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final username = prefs.getString('username'); // Assuming username is stored
+
     final replyText = _replyControllers[commentId]?.text.trim();
     if (replyText == null || replyText.isEmpty) return;
 
@@ -76,7 +91,19 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
       final token = prefs.getString('authToken');
       if (token == null) return;
 
+      // Find the owner of the comment
+      final commentOwner = widget.post.comments
+          .firstWhere((comment) => comment.id == commentId)
+          .userId;
+
+      // Add reply to the comment
       await PostService().addReply(widget.post.id, commentId, replyText, token);
+
+      // Notify the comment owner
+      await _notificationService.sendPostInteractionNotification(
+        commentOwner, // Post owner's ID
+        username!, "reply", // Interaction type
+      );
 
       // Fetch updated post
       final updatedPost =

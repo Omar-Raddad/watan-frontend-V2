@@ -26,7 +26,7 @@ class _CheckpointMapState extends State<CheckpointMap> {
   Set<Marker> _markers = {};
   Set<Polyline> _polylines = {};
   final CheckpointService checkpointService =
-      CheckpointService(baseUrl: 'http://172.16.0.107:5000');
+      CheckpointService(baseUrl: 'http://172.16.0.68:5000');
 
   final AStar aStar = AStar(Graph()); // Graph for A* algorithm
   StreamSubscription<Position>? _positionStream;

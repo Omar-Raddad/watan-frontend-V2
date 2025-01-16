@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/product_model.dart';
 import '../services/message_service.dart';
+import '../services/notification_service.dart';
+import './conversation_screen.dart'; // Replace with your actual conversation screen import
 
 class ProductDetailsScreen extends StatelessWidget {
   final Product product;
@@ -9,28 +12,53 @@ class ProductDetailsScreen extends StatelessWidget {
       : super(key: key);
 
   String _getImageUrl(String imagePath) {
-    const String baseUrl = "http://172.16.0.107:5000";
+    const String baseUrl = "http://172.16.0.68:5000";
     return "$baseUrl$imagePath";
   }
 
-  Future<void> _sendMessageToOwner(BuildContext context) async {
+  Future<void> _handleBuyNow(BuildContext context) async {
     try {
-      final messageService =
-          MessageService(baseUrl: 'http://172.16.0.107:5000');
+      final prefs = await SharedPreferences.getInstance();
+      final username =
+          prefs.getString('username'); // Get the logged-in username
+      final messageService = MessageService(baseUrl: 'http://172.16.0.68:5000');
+      final notificationService = NotificationService();
+
+      if (username == null) {
+        throw Exception("User is not logged in.");
+      }
+
+      // Send a message to the product owner
       final content =
-          "I am interested in purchasing '${product.name}' for \$${product.price?.toStringAsFixed(2) ?? 'N/A'}.";
+          "$username is interested in purchasing '${product.name}' for \$${product.price?.toStringAsFixed(2) ?? 'N/A'}.";
       await messageService.startConversation(product.ownerId, content);
+
+      // Send a purchase notification to the product owner
+      await notificationService.sendPurchaseNotification(
+        product.ownerId,
+        username,
+        product.name,
+      );
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Message sent to the owner!'),
+          content: Text('Purchase notification and message sent to the owner!'),
           backgroundColor: Colors.green,
+        ),
+      );
+
+      // Navigate to the conversation screen
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              ConversationsScreen(), // Replace with your actual parameters for the conversation screen
         ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to send message: $e'),
+          content: Text('Failed to process Buy Now: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -157,7 +185,7 @@ class ProductDetailsScreen extends StatelessWidget {
                 Center(
                   child: ElevatedButton(
                     onPressed: () {
-                      _sendMessageToOwner(context);
+                      _handleBuyNow(context);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange,

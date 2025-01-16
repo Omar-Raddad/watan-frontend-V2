@@ -13,7 +13,7 @@ class MyProductsScreen extends StatefulWidget {
 
 class _MyProductsScreenState extends State<MyProductsScreen> {
   final ProductService productService =
-      ProductService(baseUrl: 'http://172.16.0.107:5000');
+      ProductService(baseUrl: 'http://172.16.0.68:5000');
 
   List<Product> myProducts = [];
   bool isLoading = true;
@@ -53,7 +53,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
   }
 
   String _getImageUrl(String imagePath) {
-    const String baseUrl = "http://172.16.0.107:5000"; // Your backend URL
+    const String baseUrl = "http://172.16.0.68:5000"; // Your backend URL
     return "$baseUrl$imagePath";
   }
 

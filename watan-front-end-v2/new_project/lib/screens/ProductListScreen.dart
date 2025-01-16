@@ -24,7 +24,7 @@ class _FilterOptions {
 
 class _ProductListScreenState extends State<ProductListScreen> {
   final ProductService productService =
-      ProductService(baseUrl: 'http://172.16.0.107:5000');
+      ProductService(baseUrl: 'http://172.16.0.68:5000');
 
   List<Product> products = [];
   bool isLoading = true;
@@ -97,7 +97,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
   }
 
   String _getImageUrl(String imagePath) {
-    const String baseUrl = "http://172.16.0.107:5000";
+    const String baseUrl = "http://172.16.0.68:5000";
     return "$baseUrl$imagePath";
   }
 
@@ -344,8 +344,7 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
 
   Future<void> _fetchCategories() async {
     try {
-      final productService =
-          ProductService(baseUrl: 'http://172.16.0.107:5000');
+      final productService = ProductService(baseUrl: 'http://172.16.0.68:5000');
       final data = await productService.fetchCategories();
       if (mounted) {
         setState(() {
